@@ -1,0 +1,14 @@
+target/
+build/
+.gradle/
+gradle-app.setting
+.settings/
+.project
+.classpath
+bin/
+.DS_Store
+*.o
+*.exe
+*.prof
+*.hi
+*.eventlog
