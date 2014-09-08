@@ -12,3 +12,4 @@ bin/
 *.prof
 *.hi
 *.eventlog
+app.cfg
