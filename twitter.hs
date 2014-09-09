@@ -28,6 +28,7 @@ import Data.Maybe
 import Data.Time.Clock (UTCTime)
 import GHC.Generics
 import Data.Configurator
+import Data.Configurator.Types
 
 
 data Tweet = Tweet { text :: Text
@@ -93,7 +94,7 @@ userTimelineRequest a = do
 
 
 loadCredentials = do
-                config <- load [Required "/Users/morten/git/twitterclient/app.cfg"]
+                config <- loadConfigFile
                 serverName <- lookup config "config.oauthServerName" :: IO (Maybe String)
                 key <- lookup config "config.oauthConsumerKey" :: IO (Maybe String)
                 secretKey <- lookup config "config.oauthConsumerSecret" :: IO (Maybe String)
@@ -107,3 +108,18 @@ loadCredentials = do
                 
                 return (cred, oauthApp)
 
+loadConfigFile = do 
+               result <- load [Required "/Users/morten/git/twitterclient/app2.cfg"]
+               return result
+
+{--
+loadConfigFile' :: Either (String, Config)
+loadConfigFile' = do 
+               result <- try (load [Required "/Users/morten/git/twitterclient/app2.cfg"]) :: IO (Either SomeException Config)
+               
+               case result of
+                    Left ex -> return "Caught exception: " ++ show ex
+                    Right val -> return val
+               
+               --return result
+--}
