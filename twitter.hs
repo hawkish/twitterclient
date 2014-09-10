@@ -63,7 +63,7 @@ getFollowersCount = followersCount . user
 output :: Show c => (Tweet -> c) -> [Tweet] -> IO()
 output a b = mapM_ (\x -> print $ a x) b 
 
-
+{--
 printTimeline :: String -> IO ()
 printTimeline a  = do
     result <- userTimeline a  
@@ -76,6 +76,7 @@ userTimeline a = do
    json <- userTimelineRequest a 
    let result = eitherDecode $ json :: Either String [Tweet]
    return result
+
 
 
 userTimelineRequest :: String -> IO LB8.ByteString
@@ -91,25 +92,28 @@ userTimelineRequest a = do
                          -- Send request.
                          httpLbs signedreq m
                     return $ responseBody resp
+--}
 
-
+loadCredentials :: IO (Either SomeException Credential)
 loadCredentials = do
-                config <- loadConfigFile'
+                config <- try (loadConfigFile') :: IO (Either SomeException Config)
                 case config of
-                     Left ex -> return $ "Caught exception: " ++ show ex
+                     Left ex -> Left ex
                      Right val -> do
                                serverName <- lookup val "config.oauthServerName" :: IO (Maybe String)
                                key <- lookup val "config.oauthConsumerKey" :: IO (Maybe String)
                                secretKey <- lookup val "config.oauthConsumerSecret" :: IO (Maybe String)
                                accessToken <- lookup val "config.accessToken" :: IO (Maybe String)
                                accessTokenSecret <- lookup val "config.accessTokenSecret" :: IO (Maybe String)
-                               let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
+                               let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret)
+                               
                                let oauthApp = def { oauthServerName = (fromJust serverName)
                                             , oauthConsumerKey = (B8.pack $ fromJust key)
                                             , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
                                             }
-                
-                               return (cred, oauthApp)
+                               
+                               Right cred
+                               
 
 loadConfigFile = do 
                result <- load [Required "/Users/morten/git/twitterclient/app2.cfg"]
