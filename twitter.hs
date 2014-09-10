@@ -94,32 +94,30 @@ userTimelineRequest a = do
 
 
 loadCredentials = do
-                config <- loadConfigFile
-                serverName <- lookup config "config.oauthServerName" :: IO (Maybe String)
-                key <- lookup config "config.oauthConsumerKey" :: IO (Maybe String)
-                secretKey <- lookup config "config.oauthConsumerSecret" :: IO (Maybe String)
-                accessToken <- lookup config "config.accessToken" :: IO (Maybe String)
-                accessTokenSecret <- lookup config "config.accessTokenSecret" :: IO (Maybe String)
-                let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
-                let oauthApp = def { oauthServerName = (fromJust serverName)
-                       , oauthConsumerKey = (B8.pack $ fromJust key)
-                       , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
-                       }
+                config <- loadConfigFile'
+                case config of
+                     Left ex -> return $ "Caught exception: " ++ show ex
+                     Right val -> do
+                               serverName <- lookup val "config.oauthServerName" :: IO (Maybe String)
+                               key <- lookup val "config.oauthConsumerKey" :: IO (Maybe String)
+                               secretKey <- lookup val "config.oauthConsumerSecret" :: IO (Maybe String)
+                               accessToken <- lookup val "config.accessToken" :: IO (Maybe String)
+                               accessTokenSecret <- lookup val "config.accessTokenSecret" :: IO (Maybe String)
+                               let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
+                               let oauthApp = def { oauthServerName = (fromJust serverName)
+                                            , oauthConsumerKey = (B8.pack $ fromJust key)
+                                            , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
+                                            }
                 
-                return (cred, oauthApp)
+                               return (cred, oauthApp)
 
 loadConfigFile = do 
                result <- load [Required "/Users/morten/git/twitterclient/app2.cfg"]
                return result
 
-{--
-loadConfigFile' :: Either (String, Config)
+
+loadConfigFile' :: IO (Either SomeException Config)
 loadConfigFile' = do 
                result <- try (load [Required "/Users/morten/git/twitterclient/app2.cfg"]) :: IO (Either SomeException Config)
-               
-               case result of
-                    Left ex -> return "Caught exception: " ++ show ex
-                    Right val -> return val
-               
-               --return result
---}
+               return result
+
