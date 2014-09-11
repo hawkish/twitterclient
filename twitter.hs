@@ -94,25 +94,26 @@ userTimelineRequest a = do
                     return $ responseBody resp
 --}
 
-loadCredentials :: IO (Either SomeException Credential)
+loadCredentials' a = do
+                serverName <- lookup a "config.oauthServerName" :: IO (Maybe String)
+                key <- lookup a "config.oauthConsumerKey" :: IO (Maybe String)
+                secretKey <- lookup a "config.oauthConsumerSecret" :: IO (Maybe String)
+                accessToken <- lookup a "config.accessToken" :: IO (Maybe String)
+                accessTokenSecret <- lookup a "config.accessTokenSecret" :: IO (Maybe String)
+                let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
+                let oauthApp = def { oauthServerName = (fromJust serverName)
+                       , oauthConsumerKey = (B8.pack $ fromJust key)
+                       , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
+                       }
+                
+                return (cred, oauthApp)
+
+loadCredentials :: IO (Either SomeException (IO (Credential, OAuth)))
 loadCredentials = do
                 config <- try (loadConfigFile') :: IO (Either SomeException Config)
                 case config of
                      Left ex -> Left ex
-                     Right val -> do
-                               serverName <- lookup val "config.oauthServerName" :: IO (Maybe String)
-                               key <- lookup val "config.oauthConsumerKey" :: IO (Maybe String)
-                               secretKey <- lookup val "config.oauthConsumerSecret" :: IO (Maybe String)
-                               accessToken <- lookup val "config.accessToken" :: IO (Maybe String)
-                               accessTokenSecret <- lookup val "config.accessTokenSecret" :: IO (Maybe String)
-                               let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret)
-                               
-                               let oauthApp = def { oauthServerName = (fromJust serverName)
-                                            , oauthConsumerKey = (B8.pack $ fromJust key)
-                                            , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
-                                            }
-                               
-                               Right cred
+                     Right val -> Right (loadCredentials' val)
                                
 
 loadConfigFile = do 
