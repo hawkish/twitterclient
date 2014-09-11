@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 -- Due to cabal dependency issues install like so: 
 -- cabal install lens authenticate-oauth-1.4.0.8 aeson http-conduit
