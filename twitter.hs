@@ -63,7 +63,7 @@ getFollowersCount = followersCount . user
 output :: Show c => (Tweet -> c) -> [Tweet] -> IO()
 output a b = mapM_ (\x -> print $ a x) b 
 
-{--
+
 printTimeline :: String -> IO ()
 printTimeline a  = do
     result <- userTimeline a  
@@ -77,11 +77,10 @@ userTimeline a = do
    let result = eitherDecode $ json :: Either String [Tweet]
    return result
 
---}
 
 userTimelineRequest :: String -> IO LB8.ByteString
 userTimelineRequest a = do
-                    (cred, oauthApp) <- parseCredentials $ loadConfigFile
+                    (cred, oauthApp) <- parseCredentials 
                     -- Firstly, we create a HTTP request with method GET (it is the default so we don't have to change that).
                     req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ a ++ "&exclude_replies=true"
                     -- Using a HTTP manager, we authenticate the request and send it to get a response.
@@ -94,9 +93,9 @@ userTimelineRequest a = do
                     return $ responseBody resp
 
 
-parseCredentials :: IO Config -> IO (Credential, OAuth)
-parseCredentials a = do
-                config <- a
+parseCredentials :: IO (Credential, OAuth)
+parseCredentials = do
+                config <- loadConfigFile
                 serverName <- lookup config "config.oauthServerName" :: IO (Maybe String)
                 key <- lookup config "config.oauthConsumerKey" :: IO (Maybe String)
                 secretKey <- lookup config "config.oauthConsumerSecret" :: IO (Maybe String)
@@ -121,12 +120,12 @@ loadCredentials' = do
 
 loadConfigFile :: IO Config
 loadConfigFile = do 
-               result <- load [Required "/Users/morten/git/twitterclient/app2.cfg"]
+               result <- load [Required "/Users/morten/git/twitterclient/app.cfg"]
                return result
 
-{--
+
 loadConfigFile' :: IO (Either SomeException Config)
 loadConfigFile' = do 
-               result <- try (load [Required "/Users/morten/git/twitterclient/app2.cfg"]) :: IO (Either SomeException Config)
+               result <- try (load [Required "/Users/morten/git/twitterclient/app.cfg"]) :: IO (Either SomeException Config)
                return result
---}
+
