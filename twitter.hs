@@ -68,7 +68,7 @@ printTimeline :: String -> IO ()
 printTimeline a  = do
     result <- userTimeline a  
     case result of
-        Left exception -> print exception
+        Left ex -> print ex
         Right val -> output getFollowersCount val
 
 userTimeline :: String -> IO (Either String [Tweet])
@@ -77,6 +77,18 @@ userTimeline a = do
    let result = eitherDecode $ json :: Either String [Tweet]
    return result
 
+{--
+userTimeline' :: String -> IO (Either SomeException [Tweet])
+userTimeline' a = do 
+   result <- userTimelineRequest' a
+   case result of
+        Left ex -> return $ Left ex
+        Right val -> do
+                  let decoded = eitherDecode $ val :: Either String [Tweet]
+                  case decoded of
+                       Left ex -> return $ Left 
+                       Right val -> return $ Right val
+--}
 
 userTimelineRequest :: String -> IO LB8.ByteString
 userTimelineRequest a = do
@@ -91,6 +103,7 @@ userTimelineRequest a = do
                          -- Send request.
                          httpLbs signedreq m
                     return $ responseBody resp
+
 
 userTimelineRequest' :: String -> IO (Either SomeException LB8.ByteString)
 userTimelineRequest' a = do
