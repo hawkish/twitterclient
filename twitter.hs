@@ -55,7 +55,7 @@ output :: Show c => (Tweet -> c) -> [Tweet] -> IO()
 output a b = mapM_ (\x -> print $ a x) b 
 
 
--- Usage printTimeline "haskellorg"
+-- Usage: printTimeline "haskellorg"
 printTimeline :: String -> IO ()
 printTimeline a  = do
     result <- userTimeline a  
