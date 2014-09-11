@@ -80,7 +80,7 @@ userTimeline a = do
 
 userTimelineRequest :: String -> IO LB8.ByteString
 userTimelineRequest a = do
-                    (cred, oauthApp) <- parseCredentials 
+                    (cred, oauthApp) <- parseCredentials $ loadConfigFile
                     -- Firstly, we create a HTTP request with method GET (it is the default so we don't have to change that).
                     req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ a ++ "&exclude_replies=true"
                     -- Using a HTTP manager, we authenticate the request and send it to get a response.
@@ -92,31 +92,63 @@ userTimelineRequest a = do
                          httpLbs signedreq m
                     return $ responseBody resp
 
+userTimelineRequest' :: String -> IO (Either SomeException LB8.ByteString)
+userTimelineRequest' a = do
+                    b <- parseCredentials' $ loadConfigFile'
+                    case b of
+                         Left ex -> return $ Left ex
+                         Right val -> do
+                                      let cred = fst(val)
+                                      let oauthApp = snd(val)
+                                      -- Firstly, we create a HTTP request with method GET (it is the default so we don't have to change that).
+                                      req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ a ++ "&exclude_replies=true"
+                                      -- Using a HTTP manager, we authenticate the request and send it to get a response.
+                                      resp <- withManager $ \m -> do
+                                           -- OAuth Authentication. 'signOAuth' modifies the HTTP header adding the
+                                           -- appropriate authentication.
+                                           signedreq <- signOAuth oauthApp cred req
+                                           -- Send request.
+                                           httpLbs signedreq m
+                                      return $ Right(responseBody resp)
 
-parseCredentials :: IO (Credential, OAuth)
-parseCredentials = do
-                config <- loadConfigFile
-                serverName <- lookup config "config.oauthServerName" :: IO (Maybe String)
-                key <- lookup config "config.oauthConsumerKey" :: IO (Maybe String)
-                secretKey <- lookup config "config.oauthConsumerSecret" :: IO (Maybe String)
-                accessToken <- lookup config "config.accessToken" :: IO (Maybe String)
-                accessTokenSecret <- lookup config "config.accessTokenSecret" :: IO (Maybe String)
-                let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
-                let oauthApp = def { oauthServerName = (fromJust serverName)
-                       , oauthConsumerKey = (B8.pack $ fromJust key)
-                       , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
-                       }
+
+
+parseCredentials :: IO Config -> IO (Credential, OAuth)
+parseCredentials b = do
+                 a <- b
+                 serverName <- lookup a "config.oauthServerName" :: IO (Maybe String)
+                 key <- lookup a "config.oauthConsumerKey" :: IO (Maybe String)
+                 secretKey <- lookup a "config.oauthConsumerSecret" :: IO (Maybe String)
+                 accessToken <- lookup a "config.accessToken" :: IO (Maybe String)
+                 accessTokenSecret <- lookup a "config.accessTokenSecret" :: IO (Maybe String)
+                 let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
+                 let oauthApp = def { oauthServerName = (fromJust serverName)
+                     , oauthConsumerKey = (B8.pack $ fromJust key)
+                     , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
+                     }
                 
-                return (cred, oauthApp)
+                 return (cred, oauthApp)
 
-{--
-loadCredentials' :: IO (Either SomeException (IO (Credential, OAuth)))
-loadCredentials' = do
-                config <- try (loadConfigFile') :: IO (Either SomeException Config)
+
+parseCredentials' :: IO (Either SomeException Config) -> IO (Either SomeException (Credential, OAuth))
+parseCredentials' a = do
+                config <- a
                 case config of
-                     Left ex -> Left ex
-                     Right val -> Right (loadCredentials' val)
---}                               
+                     Left ex -> return $ Left ex
+                     Right val -> do 
+                           serverName <- lookup val "config.oauthServerName" :: IO (Maybe String)
+                           key <- lookup val "config.oauthConsumerKey" :: IO (Maybe String)
+                           secretKey <- lookup val "config.oauthConsumerSecret" :: IO (Maybe String)
+                           accessToken <- lookup val "config.accessToken" :: IO (Maybe String)
+                           accessTokenSecret <- lookup val "config.accessTokenSecret" :: IO (Maybe String)
+                           let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
+                           let oauthApp = def { oauthServerName = (fromJust serverName)
+                                        , oauthConsumerKey = (B8.pack $ fromJust key)
+                                        , oauthConsumerSecret = (B8.pack $ fromJust secretKey)
+                                        }
+                
+                           return $ Right(cred, oauthApp)
+
 
 loadConfigFile :: IO Config
 loadConfigFile = do 
