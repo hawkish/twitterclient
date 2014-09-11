@@ -77,11 +77,11 @@ userTimeline a = do
    let result = eitherDecode $ json :: Either String [Tweet]
    return result
 
-
+--}
 
 userTimelineRequest :: String -> IO LB8.ByteString
 userTimelineRequest a = do
-                    (cred, oauthApp) <- loadCredentials
+                    (cred, oauthApp) <- parseCredentials $ loadConfigFile
                     -- Firstly, we create a HTTP request with method GET (it is the default so we don't have to change that).
                     req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ a ++ "&exclude_replies=true"
                     -- Using a HTTP manager, we authenticate the request and send it to get a response.
@@ -92,14 +92,16 @@ userTimelineRequest a = do
                          -- Send request.
                          httpLbs signedreq m
                     return $ responseBody resp
---}
 
-loadCredentials' a = do
-                serverName <- lookup a "config.oauthServerName" :: IO (Maybe String)
-                key <- lookup a "config.oauthConsumerKey" :: IO (Maybe String)
-                secretKey <- lookup a "config.oauthConsumerSecret" :: IO (Maybe String)
-                accessToken <- lookup a "config.accessToken" :: IO (Maybe String)
-                accessTokenSecret <- lookup a "config.accessTokenSecret" :: IO (Maybe String)
+
+parseCredentials :: IO Config -> IO (Credential, OAuth)
+parseCredentials a = do
+                config <- a
+                serverName <- lookup config "config.oauthServerName" :: IO (Maybe String)
+                key <- lookup config "config.oauthConsumerKey" :: IO (Maybe String)
+                secretKey <- lookup config "config.oauthConsumerSecret" :: IO (Maybe String)
+                accessToken <- lookup config "config.accessToken" :: IO (Maybe String)
+                accessTokenSecret <- lookup config "config.accessTokenSecret" :: IO (Maybe String)
                 let cred = newCredential (B8.pack $ fromJust accessToken) (B8.pack $ fromJust accessTokenSecret) 
                 let oauthApp = def { oauthServerName = (fromJust serverName)
                        , oauthConsumerKey = (B8.pack $ fromJust key)
@@ -108,21 +110,23 @@ loadCredentials' a = do
                 
                 return (cred, oauthApp)
 
-loadCredentials :: IO (Either SomeException (IO (Credential, OAuth)))
-loadCredentials = do
+{--
+loadCredentials' :: IO (Either SomeException (IO (Credential, OAuth)))
+loadCredentials' = do
                 config <- try (loadConfigFile') :: IO (Either SomeException Config)
                 case config of
                      Left ex -> Left ex
                      Right val -> Right (loadCredentials' val)
-                               
+--}                               
 
+loadConfigFile :: IO Config
 loadConfigFile = do 
                result <- load [Required "/Users/morten/git/twitterclient/app2.cfg"]
                return result
 
-
+{--
 loadConfigFile' :: IO (Either SomeException Config)
 loadConfigFile' = do 
                result <- try (load [Required "/Users/morten/git/twitterclient/app2.cfg"]) :: IO (Either SomeException Config)
                return result
-
+--}
