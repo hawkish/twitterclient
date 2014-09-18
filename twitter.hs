@@ -51,17 +51,18 @@ getFollowersCount :: Tweet -> Int
 getFollowersCount = followersCount . user
 
 -- Nasty bit of convolution.
-output :: Show c => (Tweet -> c) -> [Tweet] -> IO()
-output a b = mapM_ (\x -> print $ a x) b 
+printTimeline' :: Show c => (Tweet -> c) -> [Tweet] -> IO()
+printTimeline' a b = mapM_ (\x -> print $ a x) b 
 
 
--- Usage: printTimeline "haskellorg"
-printTimeline :: String -> IO ()
-printTimeline a  = do
+-- Usage: printTimeline "haskellorg" text
+-- Usage: printTimeline "haskellorg" getFollowersCount
+printTimeline :: Show c => String -> (Tweet -> c) -> IO ()
+printTimeline a b  = do
     result <- userTimeline a  
     case result of
         Left ex -> print ex
-        Right val -> output text val
+        Right val -> printTimeline' b val
 
 
 userTimeline :: String -> IO (Either String [Tweet])
